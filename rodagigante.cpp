@@ -20,44 +20,42 @@
 #include <vart/sphere.h>
 #include <vart/contrib/viewerglutogl.h>
 #include <vart/contrib/mousecontrol.h>
-#include <math.h>
-#include <iostream>
-#include <iomanip>
-using namespace std;
 
-float conversor(float grau){
-    float radiano=(grau/180)*M_PI;
-    return radiano;
+#include <iostream>
+
+using namespace std;
+float conversor(float rad){
+    return (rad/180)*M_PI;
 }
 
 class MyIHClass : public VART::ViewerGlutOGL::IdleHandler
 {
     public:
-        MyIHClass() : redRadians(0) {}
+        MyIHClass() : redRadians(0), greenRadians(0) {}
         virtual ~MyIHClass() {}
         virtual void OnIdle() {
-            redRadians += 1;
-            int cont=0;
-            for (int i=0; i<10; i++){
-                float z=-70*cos(conversor(redRadians+cont));
-                float y=70*sin(conversor(redRadians+cont));
+            
+            
+            int grau=0;
+            for (size_t i = 0; i < 10; i++)
+            {
+                float y=-70*sin(conversor(grau+redRadians));
+                float z=70*cos(conversor(grau+redRadians));
                 redRotPtr[i]->MakeTranslation(0,y,z);
-                cont+=36;
+                grau+=36;    
             }
-           
-            rotation->MakeXRotation(conversor(redRadians));
+            redRadians += 0.1;
+            greenRadians += 0.1;
+            greenRotPtr->MakeXRotation(conversor(greenRadians));
             viewerPtr->PostRedisplay();
         }
     //protected:
-        VART::Transform *redRotPtr[10];
-        VART::Transform *rotation;
-        
+        VART::Transform* redRotPtr[10];
+        VART::Transform* greenRotPtr;
     private:
         float redRadians;
-        
+        float greenRadians;
 };
-
-
 // Define the keyboard handler
 class KeyboardHandler : public VART::ViewerGlutOGL::KbHandler
 {
@@ -79,8 +77,6 @@ class KeyboardHandler : public VART::ViewerGlutOGL::KbHandler
         }
     private:
 };
-
-
 
 class ClickHandlerClass : public VART::MouseControl::ClickHandler
 {
@@ -115,7 +111,6 @@ class ClickHandlerClass : public VART::MouseControl::ClickHandler
         VART::Scene* scenePtr;
 };
 
-
 // The application itself:
 int main(int argc, char* argv[])
 {
@@ -129,87 +124,60 @@ int main(int argc, char* argv[])
 
     static VART::Scene scene; // create a scene
     static VART::ViewerGlutOGL viewer; // create a viewer (application window)
-    MyIHClass idleHandler;
 
     KeyboardHandler kbh; // create a keyboard handler
     // create a camera (scene observer)
-
-    VART::Camera camera(VART::Point4D(1,0,0),VART::Point4D(0,0,0),VART::Point4D(0,1,0,0));
-    camera.SetFarPlaneDistance(200); //arruma a distancia da camera
-    camera.MoveForward(-190);
+    VART::Camera camera(VART::Point4D(200,0,50),VART::Point4D(0,0,0),VART::Point4D(0,1,0,0));
+    camera.SetFarPlaneDistance(200);
     // create some objects
-    
     list<VART::MeshObject*> objects;
     ClickHandlerClass clickHandler;
-    clickHandler.scenePtr = &scene; 
+    MyIHClass idh;
+    clickHandler.scenePtr = &scene;
 
     // Initialize scene objects
     VART::MeshObject::ReadFromOBJ(argv[1], &objects);
+    VART::MeshObject wheel;
+    VART::MeshObject support;
+    VART::Transform rotWheel;
+    VART::Transform TransChair[10];
+
     
+    int grau;
 
-
-    //objetos
-
-    //vetor de cadeiras
-    VART::MeshObject *chairs[10]; 
-    VART::Transform testeTrans[10];
-    VART::Transform rotation;
-    for (int n=0; n < 10; n++){
-        chairs[n]=NULL;
-        testeTrans[n].MakeIdentity();
-       
-    }
-    VART::MeshObject *support=NULL;
-    VART::MeshObject *wheel=NULL;
     // Build up the scene
     list<VART::MeshObject*>::iterator iter = objects.begin();
     for (; iter != objects.end(); ++iter) {
         if((*iter)->GetDescription()=="chair"){
-          
-            for (int n=0; n < 10; n++){
-                chairs[n]=dynamic_cast<VART::MeshObject *>((*iter)->Copy()); //copia das cadeiras
-                if(n%2==0){
-                    chairs[n]->SetMaterial(VART::Material::PLASTIC_RED());
-                }
-                else if (n%3==0){
-                    chairs[n]->SetMaterial(VART::Material::PLASTIC_BLUE());
-                }
-                //scene.AddObject(chairs[n]);
-                testeTrans[n].AddChild(*(dynamic_cast<VART::SceneNode*>(chairs[n])));
-                scene.AddObject(&(testeTrans[n]));
+            for (size_t i = 0; i < 10; i++)
+            {
+                
+                TransChair[i].AddChild(*(dynamic_cast<VART::MeshObject*>((*iter)->Copy())));
+                scene.AddObject(&TransChair[i]);
+                idh.redRotPtr[i]=&TransChair[i];
             }
         }
-        else if((*iter)->GetDescription()=="support"){
-            support=*iter;
-           // support->ApplyTransform(redux);
-            scene.AddObject(support);
-            cout<<support->GetDescription()<<endl;
-        }
         else if((*iter)->GetDescription()=="wheel"){
-            wheel=*iter;
-           // wheel->ApplyTransform(redux);
-            rotation.MakeIdentity();
-            rotation.AddChild(*(dynamic_cast<VART::SceneNode*>(wheel)));
-            scene.AddObject(&rotation);
-            cout<<wheel->GetDescription()<<endl;
+            wheel=*(*iter);
+            rotWheel.AddChild(wheel);
+        }
+        else if((*iter)->GetDescription()=="support"){
+            support=*(*iter);
         }
     }
-
+    scene.AddObject(&rotWheel);
+    scene.AddObject(&support);
+    idh.greenRotPtr=&rotWheel;
     scene.AddLight(VART::Light::BRIGHT_AMBIENT());
     scene.AddCamera(&camera);
     //scene.MakeCameraViewAll();
-    for (int i=0; i<10; i++){
-        idleHandler.redRotPtr[i]=&(testeTrans[i]);
-    }
-    idleHandler.rotation=&rotation;
-    
+
     // Set up the viewer
     viewer.SetTitle("V-ART OBJ Viewer");
     viewer.SetScene(scene); // attach the scene
     viewer.SetKbHandler(&kbh); // attach the keyboard handler
     viewer.SetClickHandler(&clickHandler);
-    viewer.SetIdleHandler(&idleHandler);
-   
+    viewer.SetIdleHandler(&idh);
     // Run application
     scene.DrawLightsOGL(); // Set OpenGL's lights' state
     VART::ViewerGlutOGL::MainLoop(); // Enter main loop (event loop)
