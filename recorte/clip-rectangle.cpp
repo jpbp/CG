@@ -22,8 +22,16 @@ void ClipRectangle::Set(double xmin, double xmax, double ymin, double ymax)
 // A linha alocada aqui será desalocada na função CleanUp().
 Line* ClipRectangle::Clip(const Line& l)
 {
-    int t=0;
-   l.Coordinates(t);
+    double inicio=0;
+    double fim =1;
+    for (size_t i = 0; i < 4; i++)
+    {
+        if(i==0){ // lado esquerdo 
+            double numerador=mXmin-l.mP0.mX;
+            double denominador= l.mP1.mX-l.mP0.mX;
+        }
+    }
+    
 }
 
 void ClipRectangle::Read(const string& prompt)
