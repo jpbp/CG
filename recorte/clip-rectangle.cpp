@@ -33,6 +33,7 @@ Line* ClipRectangle::Clip(const Line& l)
    {
         if(denominador[i]==0){
             if(numerador[i]>0){
+                //cout<<"foi0"<<endl;
                 return NULL;
             }
         }
@@ -40,39 +41,53 @@ Line* ClipRectangle::Clip(const Line& l)
             t=numerador[i]/denominador[i];
             if(denominador[i]>0){
                 if(t>fim){
+                    //cout<<"foi1"<<endl;
                     return NULL;
                 }
                if(t>inicio){
+                   cout<<"foi2"<<endl;
                     inicio=t;
                 }
             }
             else{
                 if(t<inicio){
+                   // cout<<"foi3"<<endl;
                     return NULL;
                 }
                 if(t<fim){
+                    cout<<"foi4"<<endl;
                     fim=t;
                 }
             }
-        }    
+        }  
+       // cout<<"valor de t: "<<t<<endl;  
    }
+   //cout<<"valor de t: "<<t<<" "<<"valor inicio e fim: "<<inicio<<" "<<fim<<endl;
    if(inicio==0 and fim==1){
+       cout<<"foiteste"<<endl;
        linha->mP0=l.mP0;
        linha->mP1=l.mP1;
        return linha;
    }
-   if(inicio!=0){
-       cout<<"valor de t: "<<t<<" "<<"valor inicio e fim: "<<inicio<<" "<<fim<<endl;
+   else if(inicio!=0 and fim!=1){
+       linha->mP0=l.mP0+(l.mP1-l.mP0)*inicio;
+       linha->mP1=l.mP0+(l.mP1-l.mP0)*fim;
+   }
+   
+   else if(inicio!=0){
+       
         ponto=l.mP0+(l.mP1-l.mP0)*inicio;
         linha->mP0=ponto;
         linha->mP1=l.mP1;
    }
-   if(fim!=1){
-       cout<<"valor de t: "<<t<<" "<<"valor inicio e fim: "<<inicio<<" "<<fim<<endl;
+   else if(fim!=1){
+       cout<<"aqui";
         ponto=l.mP0+(l.mP1-l.mP0)*fim;
-        //linha->mP0=l.mP0;
+        linha->mP0=l.mP0;
         linha->mP1=ponto;
    }
+   cout<<endl;
+   cout<<endl;
    return linha;
 }
 
