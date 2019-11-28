@@ -95,10 +95,18 @@ class Triangulo3D
                     }
                 }
             }
+
             // atualizar mY, mXMin, mXMax e mZ no intervalo
             // FixMe
+            ptIntervalo->mY = y;
+            ptIntervalo->mXMin = xMin;
+            ptIntervalo->mXMax = xMax;
             // atualizar y, xMin, xMax e z locais (para proxima ativacao da funcao)
+            y++;
+            xMin+=incrementoXMin;
+            xMax+=incrementoXMax;
             // FixMe
+            
             return true;
         }
         Ponto P1() const { return mP1; }
